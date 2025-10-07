@@ -431,25 +431,6 @@
     </div>
 
     <script>
-        // === SOUND EFFECTS ===
-function playStartSound() {
-    const sound = new Audio("start.mp3");
-    sound.volume = 0.8;   // optional
-    sound.play();
-}
-
-function playWarningSound() {
-    const sound = new Audio("warning.mp3");
-    sound.volume = 0.8;
-    sound.play();
-}
-
-function playCompleteSound() {
-    const sound = new Audio("end.mp3");
-    sound.volume = 1.0;
-    sound.play();
-}
-
         let mode = '';
         let totalSeconds = 0;
         let currentSeconds = 0;
@@ -460,6 +441,48 @@ function playCompleteSound() {
         let currentTheme = 0;
         
         let audioCtx = null;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function createTone(freq, duration, volume = 0.15) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration / 1000);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration / 1000);
+        }
+        
+        function playBackupHalfwayAlert() {
+            // Halfway Alert - matches reference code exactly
+            const notes = [500, 600, 700, 600, 500, 600, 700, 800];
+            notes.forEach((freq, i) => setTimeout(() => createTone(freq, 600, 0.2), i * 300));
+        }
+        
+        function playBackupFinalAlert() {
+            // Final Alert - matches reference code exactly
+            const notes = [800, 900, 1000, 900, 800, 900, 1000, 1100, 1200, 1100, 1000, 1200];
+            notes.forEach((freq, i) => setTimeout(() => createTone(freq, 400, 0.2), i * 200));
+        }
+        
+        function playBackupCompleteSound() {
+            // Finish Sound - matches reference code exactly
+            const notes = [600, 500];
+            notes.forEach((freq, i) => setTimeout(() => createTone(freq, 800, 0.2), i * 400));
+        }
         
         const modeConfig = {
             'grade6-7': { time: 120, name: 'Grade 6-7', warning: 60 },
@@ -582,51 +605,26 @@ function playCompleteSound() {
             document.getElementById('themeSelector').classList.remove('open');
         }
         
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
-        
-        function createTone(freq, duration, volume = 0.15) {
-            initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.frequency.value = freq;
-            osc.type = 'sine';
-            
-            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration / 1000);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration / 1000);
+        function playCustomSound(filename, backupFunction) {
+            const audio = new Audio(filename);
+            audio.volume = 0.7;
+            audio.play().catch(error => {
+                console.log('Custom audio playback failed, using backup sound:', error);
+                // Fallback to generated tones if custom sound fails
+                backupFunction();
+            });
         }
         
         function playHalfwayAlert() {
-            // 3-second melodic progression
-            const notes = [523, 587, 659, 698, 784, 880, 988, 1047];
-            notes.forEach((freq, i) => {
-                setTimeout(() => createTone(freq, 400), i * 375);
-            });
+            playCustomSound('mid.mp3', playBackupHalfwayAlert);
         }
         
         function playFinalAlert() {
-            // 3-second urgent sequence
-            const urgentNotes = [880, 988, 1047, 1175, 1319, 1397, 1568, 1760];
-            urgentNotes.forEach((freq, i) => {
-                setTimeout(() => createTone(freq, 350, 0.2), i * 375);
-            });
+            playCustomSound('5.mp3', playBackupFinalAlert);
         }
         
         function playCompleteSound() {
-            // Victory chord
-            createTone(523, 1000, 0.1); // C
-            createTone(659, 1000, 0.1); // E
-            createTone(784, 1000, 0.1); // G
+            playCustomSound('end.mp3', playBackupCompleteSound);
         }
         
         function startTimer(selectedMode) {
@@ -799,5 +797,5 @@ function playCompleteSound() {
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a47f25955f17a7',t:'MTc1OTc0Njc2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98aabb00b112a843',t:'MTc1OTgxMjEzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
