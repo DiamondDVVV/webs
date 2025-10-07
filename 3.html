@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Projector Timer — Grade 6-7 | Grade 8-10 | Buzzer</title>
+<style>
+  :root{
+    --bg1:#0f172a;
+    --bg2:#0b1220;
+    --accent1:#6d28d9; /* purple */
+    --accent2:#06b6d4; /* teal */
+    --glass: rgba(255,255,255,0.06);
+    --card: rgba(255,255,255,0.03);
+    --text: #e6eef8;
+  }
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  body{
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(109,40,217,0.13), transparent 8%),
+                radial-gradient(900px 500px at 90% 80%, rgba(6,182,212,0.08), transparent 10%),
+                linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:var(--text);
+    display:flex;align-items:center;justify-content:center;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+
+  .app {
+    width:100%;
+    max-width:1200px;
+    margin:30px;
+    border-radius:20px;
+    padding:28px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: 0 10px 40px rgba(2,6,23,0.6);
+    min-height:600px;
+  }
+
+  .header {
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-bottom:22px;
+  }
+  .brand {display:flex;align-items:center;gap:14px;}
+  .logo{
+    width:68px;height:68px;border-radius:14px;
+    background:linear-gradient(135deg,var(--accent1),var(--accent2));
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:28px;
+    color:white;box-shadow:0 8px 24px rgba(6,11,30,0.6);
+  }
+  .title {font-size:20px;font-weight:700;line-height:1;color:var(--text);}
+  .subtitle{font-size:12px;color:rgba(230,238,248,0.7);margin-top:3px;}
+
+  /* Home grid */
+  .home {
+    display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:18px;
+  }
+  .card {
+    background:var(--card);
+    border-radius:16px;padding:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;text-align:center;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(2,6,23,0.5);}
+  .card h2{margin:0;font-size:22px;}
+  .card p{margin:0;color:rgba(230,238,248,0.75);font-size:13px}
+  .mode-badge {padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);font-weight:700;}
+  .start-btn {margin-top:6px;padding:10px 18px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;font-weight:800;cursor:pointer;font-size:15px;box-shadow:0 8px 20px rgba(109,40,217,0.24);}
+
+  /* Timer screen */
+  .timer-screen{display:none;flex-direction:column;align-items:center;justify-content:center;height:520px;gap:20px;}
+  .timer-display {
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    gap:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    padding:28px;border-radius:20px;width:100%;
+  }
+  .time-big{font-size:110px;font-weight:900;letter-spacing:6px;text-shadow:0 18px 40px rgba(13,16,30,0.6);}
+  .progress-ring {
+    width:220px;height:220px;display:flex;align-items:center;justify-content:center;border-radius:999px;
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.02), transparent 25%);
+    box-shadow: inset 0 6px 18px rgba(255,255,255,0.02);
+  }
+  .controls {display:flex;gap:12px;align-items:center;}
+  .big {font-size:18px;padding:12px 18px;border-radius:12px;border:none;cursor:pointer;font-weight:800;}
+  .primary {background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff;box-shadow:0 10px 30px rgba(109,40,217,0.18);}
+  .ghost {background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);}
+
+  .small-note{font-size:13px;color:rgba(230,238,248,0.7)}
+
+  /* Footer */
+  .footer {margin-top:18px;display:flex;align-items:center;justify-content:space-between;color:rgba(230,238,248,0.6);font-size:13px;}
+  @media (max-width:900px){
+    .home{grid-template-columns:1fr; }
+    .time-big{font-size:72px}
+    .progress-ring{width:180px;height:180px}
+  }
+</style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Projector timer app">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">V</div>
+        <div>
+          <div class="title">Projector Timer</div>
+          <div class="subtitle">Clean, fullscreen timers for school events — Grade modes & buzzer</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button id="fsBtn" class="big ghost" title="Go fullscreen">Go Fullscreen</button>
+        <button id="homeBtn" class="big ghost" title="Back to home">Home</button>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <div id="home" class="home" aria-hidden="false">
+      <div class="card" data-mode="g6">
+        <div class="mode-badge">Mode</div>
+        <h2>Grade 6 — 7</h2>
+        <p>2:00 minutes total<br>Half-time alert at 1:00<br>Final 5-second countdown</p>
+        <button class="start-btn" data-mode="g6">Enter</button>
+      </div>
+      <div class="card" data-mode="g8">
+        <div class="mode-badge">Mode</div>
+        <h2>Grade 8 — 10</h2>
+        <p>3:00 minutes total<br>Half-time alert at 1:30<br>Final 5-second countdown</p>
+        <button class="start-btn" data-mode="g8">Enter</button>
+      </div>
+      <div class="card" data-mode="buzzer">
+        <div class="mode-badge">Mode</div>
+        <h2>Buzzer</h2>
+        <p>1:00 minute total<br>Half-time alert at 0:30<br>Final 5-second countdown</p>
+        <button class="start-btn" data-mode="buzzer">Enter</button>
+      </div>
+    </div>
+
+    <!-- TIMER SCREEN -->
+    <div id="timerScreen" class="timer-screen" aria-hidden="true">
+      <div class="timer-display" role="region" aria-live="polite">
+        <div style="display:flex;align-items:center;gap:18px;width:100%;justify-content:space-between">
+          <div>
+            <div id="modeLabel" style="font-weight:800;font-size:18px"></div>
+            <div class="small-note" id="modeNote"></div>
+          </div>
+          <div class="small-note">Press <strong>Space</strong> to Start/Pause · <strong>R</strong> to Reset</div>
+        </div>
+
+        <div class="progress-ring" aria-hidden="false">
+          <svg id="progressSvg" width="220" height="220" viewBox="0 0 120 120" style="transform:rotate(-90deg);">
+            <defs>
+              <linearGradient id="gStroke" x1="0" x2="1">
+                <stop offset="0%" stop-color="#6d28d9"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+            <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,0.06)" stroke-width="10" fill="none"/>
+            <circle id="progressCircle" cx="60" cy="60" r="50" stroke="url(#gStroke)" stroke-width="10" fill="none"
+                    stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="0" />
+          </svg>
+          <div style="position:absolute;text-align:center">
+            <div id="timeBig" class="time-big">02:00</div>
+            <div class="small-note" id="statusLabel">Ready</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="startPause" class="big primary">Start</button>
+          <button id="reset" class="big ghost">Reset</button>
+          <button id="skipHalf" class="big ghost" title="Jump to half-time">Jump to Half</button>
+          <button id="muteBtn" class="big ghost">Mute</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Designed for projectors • Large text & high-contrast</div>
+      <div>Made by your friendly assistant ✅</div>
+    </div>
+  </div>
+
+<script>
+/*
+Projector Timer
+Single file. Timers:
+- Grade 6-7: total 120s, half alert at 60s
+- Grade 8-10: total 180s, half alert at 90s
+- Buzzer: total 60s, half alert at 30s
+Alerts:
+- Half-time: short distinct melody
+- 1-minute-left / half-time left reminder per mode (as described)
+- Final 5 seconds: continuous quick beep
+- Time up: long descending tone
+All audio generated with WebAudio API (no external files).
+Keyboard: Space start/pause, R reset, H home.
+*/
+
+(() => {
+  // Mode definitions
+  const modes = {
+    g6: {name:'Grade 6 — 7', total:120, half:60, halfLabel:'1:00 left'},
+    g8: {name:'Grade 8 — 10', total:180, half:90, halfLabel:'1:30 left'},
+    buzzer: {name:'Buzzer', total:60, half:30, halfLabel:'0:30 left'}
+  };
+
+  // UI elements
+  const home = document.getElementById('home');
+  const timerScreen = document.getElementById('timerScreen');
+  const modeLabel = document.getElementById('modeLabel');
+  const modeNote = document.getElementById('modeNote');
+  const timeBig = document.getElementById('timeBig');
+  const statusLabel = document.getElementById('statusLabel');
+  const startPauseBtn = document.getElementById('startPause');
+  const resetBtn = document.getElementById('reset');
+  const homeBtn = document.getElementById('homeBtn');
+  const fsBtn = document.getElementById('fsBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const skipHalf = document.getElementById('skipHalf');
+  const progressCircle = document.getElementById('progressCircle');
+
+  let currentMode = null;
+  let duration = 0;
+  let remaining = 0;
+  let halfTime = 0;
+  let running = false;
+  let intervalId = null;
+  let audioOn = true;
+  let finalBeepInterval = null;
+  let usedHalf = false;
+
+  // Audio context
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = AudioContext ? new AudioContext() : null;
+
+  function playTone(freq=440, time=0.15, type='sine', gain=0.18){
+    if(!audioOn || !audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    // fade out
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + time);
+    o.stop(audioCtx.currentTime + time + 0.02);
+  }
+
+  function playMelodyHalf(){ // short melody for half-time
+    if(!audioOn || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(660, now);
+    g.gain.setValueAtTime(0.18, now);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(now);
+    o.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+    o.frequency.setValueAtTime(660, now + 0.18);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
+    o.stop(now + 0.38);
+  }
+
+  function playMelodyEnd(){ // longer descending tone for end
+    if(!audioOn || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'triangle';
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.setValueAtTime(880, now);
+    g.gain.setValueAtTime(0.25, now);
+    o.start(now);
+    o.frequency.exponentialRampToValueAtTime(220, now + 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+    o.stop(now + 0.82);
+  }
+
+  // final 5s continuous quick beep (start loop)
+  function startFinalRapidBeep(){
+    if(!audioOn || !audioCtx) return;
+    if(finalBeepInterval) return;
+    finalBeepInterval = setInterval(()=>playTone(920, 0.08, 'square', 0.12), 180);
+  }
+  function stopFinalRapidBeep(){
+    if(finalBeepInterval){ clearInterval(finalBeepInterval); finalBeepInterval = null; }
+  }
+
+  // update display
+  function updateDisplay(){
+    const mm = Math.floor(remaining/60).toString().padStart(2,'0');
+    const ss = Math.floor(remaining%60).toString().padStart(2,'0');
+    timeBig.textContent = `${mm}:${ss}`;
+    // status label logic
+    if(!running) statusLabel.textContent = 'Paused';
+    else statusLabel.textContent = 'Running';
+
+    // progress circle
+    const total = duration;
+    const ratio = Math.max(0, Math.min(1, (total - remaining) / total));
+    const circumference = 2*Math.PI*50;
+    const dashoffset = circumference - (circumference * ratio);
+    progressCircle.style.strokeDashoffset = dashoffset;
+  }
+
+  // create timer loop
+  function startTimer(){
+    if(running) return;
+    running = true;
+    startPauseBtn.textContent = 'Pause';
+    statusLabel.textContent = 'Running';
+    // resume audio context if suspended (for browsers that require user gesture)
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+    const tick = () => {
+      const prev = remaining;
+      remaining = Math.max(0, remaining - 0.25); // tick 250ms
+      // checks - half-time
+      if(!usedHalf && remaining <= (duration - halfTime) && remaining > (duration - halfTime - 0.5)) {
+        // when we cross the half-time threshold from the start, but easier: trigger when remaining === halfTime (allow tolerance)
+      }
+      // Better to check based on remaining roughly equal to halfTime
+      if(!usedHalf && Math.abs(remaining - halfTime) < 0.26) {
+        usedHalf = true;
+        // Half-time sound & visual flash
+        flashBackground();
+        playMelodyHalf();
+        statusLabel.textContent = 'Half-time alert';
+      }
+
+      // Final 5s: start rapid beep & visual
+      if(remaining <= 5 && remaining > 0){
+        startFinalRapidBeep();
+        statusLabel.textContent = 'Final 5 seconds';
+      }
+      if(prev > 5 && remaining <= 5){
+        // entered final 5
+        flashBackground(true);
+      }
+      if(remaining === 0){
+        clearInterval(intervalId);
+        intervalId = null;
+        running = false;
+        startPauseBtn.textContent = 'Start';
+        statusLabel.textContent = 'Time up!';
+        stopFinalRapidBeep();
+        playMelodyEnd();
+        // small visual pulse
+        pulseOnce();
+      }
+      updateDisplay();
+    };
+
+    // high-frequency interval for smooth progress; use 250ms
+    intervalId = setInterval(tick, 250);
+  }
+
+  function pauseTimer(){
+    if(!running) return;
+    running = false;
+    startPauseBtn.textContent = 'Start';
+    statusLabel.textContent = 'Paused';
+    if(intervalId) { clearInterval(intervalId); intervalId = null; }
+    stopFinalRapidBeep();
+  }
+
+  function resetTimer(fullReset=true){
+    if(intervalId){ clearInterval(intervalId); intervalId = null; }
+    running = false;
+    startPauseBtn.textContent = 'Start';
+    stopFinalRapidBeep();
+    usedHalf = false;
+    remaining = duration;
+    statusLabel.textContent = 'Ready';
+    updateDisplay();
+    if(fullReset){
+      // small soft flash to indicate reset
+      flashBackground(false);
+    }
+  }
+
+  // UI helpers
+  function showHome(){
+    timerScreen.style.display = 'none';
+    home.style.display = 'grid';
+    home.setAttribute('aria-hidden','false');
+    timerScreen.setAttribute('aria-hidden','true');
+  }
+  function showTimer(){
+    home.style.display = 'none';
+    timerScreen.style.display = 'flex';
+    home.setAttribute('aria-hidden','true');
+    timerScreen.setAttribute('aria-hidden','false');
+  }
+
+  // choose mode
+  function enterMode(modeKey){
+    currentMode = modes[modeKey];
+    duration = currentMode.total;
+    remaining = duration;
+    halfTime = currentMode.half;
+    usedHalf = false;
+    modeLabel.textContent = currentMode.name;
+    modeNote.textContent = `Half-time alert at ${formatTime(halfTime)}; total ${formatTime(duration)}`;
+    // reset progress ring
+    progressCircle.style.strokeDashoffset = 2*Math.PI*50;
+    updateDisplay();
+    showTimer();
+  }
+
+  // small UI pulses/flashes to draw attention
+  function flashBackground(rapid=false){
+    const el = document.body;
+    const c1 = rapid ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)';
+    el.style.transition = 'background 0.18s';
+    el.style.background = `radial-gradient(1200px 600px at 10% 10%, rgba(109,40,217,0.20), transparent 8%),
+                radial-gradient(900px 500px at 90% 80%, rgba(6,182,212,0.12), transparent 10%),
+                linear-gradient(180deg,var(--bg1),var(--bg2))`;
+    setTimeout(()=> {
+      el.style.background = '';
+      // revert back by removing transition after small delay
+      setTimeout(()=>el.style.transition='', 200);
+    }, rapid ? 400 : 260);
+  }
+  function pulseOnce(){
+    const el = document.querySelector('.app');
+    el.style.transition = 'transform 0.18s ease, box-shadow 0.18s ease';
+    el.style.transform = 'scale(1.02)';
+    setTimeout(()=> el.style.transform = 'scale(1)', 220);
+  }
+
+  // format seconds to mm:ss
+  function formatTime(s){
+    const mm = Math.floor(s/60).toString().padStart(2,'0');
+    const ss = Math.floor(s%60).toString().padStart(2,'0');
+    return `${mm}:${ss}`;
+  }
+
+  // attach buttons
+  document.querySelectorAll('.start-btn').forEach(b => {
+    b.addEventListener('click', (ev)=>{
+      const mode = ev.currentTarget.dataset.mode;
+      enterMode(mode);
+    });
+  });
+  document.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('click', (ev)=>{
+      const mode = card.dataset.mode;
+      // if click is directly on Enter button it is handled already; this ensures clicking card works too
+      if(mode) enterMode(mode);
+    });
+  });
+
+  startPauseBtn.addEventListener('click', ()=>{
+    if(!currentMode) return;
+    if(running) pauseTimer();
+    else startTimer();
+  });
+  resetBtn.addEventListener('click', ()=> resetTimer(true));
+  homeBtn.addEventListener('click', ()=> { pauseTimer(); showHome(); });
+  fsBtn.addEventListener('click', ()=> {
+    const doc = document.documentElement;
+    if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+    else doc.requestFullscreen().catch(()=>{});
+  });
+
+  muteBtn.addEventListener('click', ()=>{
+    audioOn = !audioOn;
+    muteBtn.textContent = audioOn ? 'Mute' : 'Unmute';
+    if(!audioOn) stopFinalRapidBeep();
+  });
+
+  skipHalf.addEventListener('click', ()=> {
+    if(!currentMode) return;
+    // jump remaining to half-time position (or just slightly above to trigger)
+    remaining = Math.max(0, halfTime + 0.001);
+    usedHalf = false; // ensure half triggers
+    updateDisplay();
+  });
+
+  // keyboard controls
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space' && currentMode){
+      e.preventDefault();
+      if(running) pauseTimer(); else startTimer();
+    } else if(e.key.toLowerCase() === 'r' && currentMode){
+      resetTimer(true);
+    } else if(e.key.toLowerCase() === 'h'){
+      pauseTimer(); showHome();
+    } else if(e.key === 'Enter' && home.style.display !== 'none'){
+      // press Enter on home to select first card (Grade 6-7) if nothing focused
+      const el = document.querySelector('.card');
+      if(el) el.click();
+    }
+  });
+
+  // ensure big font resizing on window change for projector
+  window.addEventListener('resize', ()=> updateDisplay());
+
+  // initial home state
+  showHome();
+
+  // small note: browsers require user gesture to start audio; we call resume() on first start/button
+  // Make Start button do a friendly brief sound when starting if audioOn
+  startPauseBtn.addEventListener('click', ()=>{
+    if(audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(()=>{});
+    }
+    if(!running && audioOn) playTone(720, 0.08, 'sine', 0.08);
+  });
+
+  // also produce a small click tone when entering a mode
+  document.querySelectorAll('.start-btn').forEach(b=>{
+    b.addEventListener('click', ()=> {
+      if(audioOn) playTone(780,0.08,'sine',0.08);
+    });
+  });
+
+  // accessibility: focus the start button when timer screen appears
+  const observer = new MutationObserver(()=> {
+    if(timerScreen.style.display !== 'none') startPauseBtn.focus();
+  });
+  observer.observe(timerScreen, {attributes:true, attributeFilter:['style']});
+
+  // init progress circle stroke-dasharray
+  (function initProgress(){
+    const circumference = 2*Math.PI*50;
+    progressCircle.style.strokeDasharray = circumference;
+    progressCircle.style.strokeDashoffset = circumference;
+  })();
+
+})();
+</script>
+</body>
+</html>

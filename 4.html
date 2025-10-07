@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .smooth-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .timer-progress {
+            transition: stroke-dashoffset 1s linear;
+        }
+        
+        .gentle-hover:hover {
+            transform: translateY(-2px);
+        }
+        
+        .soft-shadow {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50">
+
+    <!-- Home Screen -->
+    <div id="homeScreen" class="min-h-screen flex items-center justify-center p-8">
+        <div class="grid grid-cols-3 gap-16 max-w-6xl">
+            
+            <div class="bg-white/80 backdrop-blur-sm rounded-3xl p-16 text-center gentle-hover smooth-transition cursor-pointer soft-shadow" onclick="startTimer('grade6-7')">
+                <div class="text-7xl font-light text-rose-400 mb-6">2:00</div>
+                <div class="text-2xl font-light text-gray-600">Grade 6-7</div>
+            </div>
+            
+            <div class="bg-white/80 backdrop-blur-sm rounded-3xl p-16 text-center gentle-hover smooth-transition cursor-pointer soft-shadow" onclick="startTimer('grade8-10')">
+                <div class="text-7xl font-light text-rose-400 mb-6">3:00</div>
+                <div class="text-2xl font-light text-gray-600">Grade 8-10</div>
+            </div>
+            
+            <div class="bg-white/80 backdrop-blur-sm rounded-3xl p-16 text-center gentle-hover smooth-transition cursor-pointer soft-shadow" onclick="startTimer('buzzer')">
+                <div class="text-7xl font-light text-rose-400 mb-6">1:00</div>
+                <div class="text-2xl font-light text-gray-600">Buzzer</div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Timer Screen -->
+    <div id="timerScreen" class="min-h-screen flex flex-col items-center justify-center hidden">
+        
+        <div class="mb-12">
+            <button onclick="goHome()" class="text-gray-400 hover:text-gray-600 text-xl font-light smooth-transition">← Home</button>
+        </div>
+        
+        <div class="relative mb-16">
+            <svg class="w-80 h-80 transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" stroke="#f3f4f6" stroke-width="2" fill="none"/>
+                <circle id="progressCircle" cx="50" cy="50" r="45" stroke="#fb7185" stroke-width="2" fill="none" 
+                        stroke-linecap="round" class="timer-progress" stroke-dasharray="283 283" stroke-dashoffset="0"/>
+            </svg>
+            
+            <div class="absolute inset-0 flex items-center justify-center">
+                <div id="timeDisplay" class="text-6xl font-light text-gray-700">2:00</div>
+            </div>
+        </div>
+        
+        <div class="flex gap-8">
+            <button id="playBtn" onclick="toggleTimer()" class="bg-rose-300 hover:bg-rose-400 text-white px-12 py-4 rounded-2xl text-xl font-light smooth-transition soft-shadow">
+                Start
+            </button>
+            <button onclick="resetTimer()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-12 py-4 rounded-2xl text-xl font-light smooth-transition soft-shadow">
+                Reset
+            </button>
+        </div>
+        
+    </div>
+
+    <script>
+        let mode = '';
+        let totalSeconds = 0;
+        let currentSeconds = 0;
+        let interval = null;
+        let running = false;
+        let halfwayAlerted = false;
+        let finalAlerted = false;
+        
+        let audioCtx = null;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function beep(freq, duration) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration / 1000);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration / 1000);
+        }
+        
+        function playHalfwayAlert() {
+            // 3-second gentle warning
+            beep(500, 600);
+            setTimeout(() => beep(600, 600), 300);
+            setTimeout(() => beep(700, 600), 600);
+            setTimeout(() => beep(600, 600), 900);
+            setTimeout(() => beep(500, 600), 1200);
+            setTimeout(() => beep(600, 600), 1500);
+            setTimeout(() => beep(700, 600), 1800);
+            setTimeout(() => beep(800, 600), 2100);
+        }
+        
+        function playFinalAlert() {
+            // 3-second urgent countdown
+            beep(800, 400);
+            setTimeout(() => beep(900, 400), 200);
+            setTimeout(() => beep(1000, 400), 400);
+            setTimeout(() => beep(900, 400), 600);
+            setTimeout(() => beep(800, 400), 800);
+            setTimeout(() => beep(900, 400), 1000);
+            setTimeout(() => beep(1000, 400), 1200);
+            setTimeout(() => beep(1100, 400), 1400);
+            setTimeout(() => beep(1200, 400), 1600);
+            setTimeout(() => beep(1100, 400), 1800);
+            setTimeout(() => beep(1000, 400), 2000);
+            setTimeout(() => beep(1200, 800), 2200);
+        }
+        
+        function playFinishSound() {
+            beep(600, 800);
+            setTimeout(() => beep(500, 800), 400);
+        }
+        
+        function startTimer(selectedMode) {
+            mode = selectedMode;
+            
+            switch(mode) {
+                case 'grade6-7':
+                    totalSeconds = 120;
+                    break;
+                case 'grade8-10':
+                    totalSeconds = 180;
+                    break;
+                case 'buzzer':
+                    totalSeconds = 60;
+                    break;
+            }
+            
+            currentSeconds = totalSeconds;
+            halfwayAlerted = false;
+            finalAlerted = false;
+            
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('timerScreen').classList.remove('hidden');
+            
+            updateDisplay();
+        }
+        
+        function toggleTimer() {
+            if (running) {
+                pause();
+            } else {
+                start();
+            }
+        }
+        
+        function start() {
+            running = true;
+            document.getElementById('playBtn').textContent = 'Pause';
+            document.getElementById('playBtn').className = 'bg-amber-300 hover:bg-amber-400 text-white px-12 py-4 rounded-2xl text-xl font-light smooth-transition soft-shadow';
+            
+            interval = setInterval(() => {
+                currentSeconds--;
+                updateDisplay();
+                checkAlerts();
+                
+                if (currentSeconds <= 0) {
+                    finish();
+                }
+            }, 1000);
+        }
+        
+        function pause() {
+            running = false;
+            clearInterval(interval);
+            document.getElementById('playBtn').textContent = 'Resume';
+            document.getElementById('playBtn').className = 'bg-rose-300 hover:bg-rose-400 text-white px-12 py-4 rounded-2xl text-xl font-light smooth-transition soft-shadow';
+        }
+        
+        function resetTimer() {
+            running = false;
+            clearInterval(interval);
+            currentSeconds = totalSeconds;
+            halfwayAlerted = false;
+            finalAlerted = false;
+            
+            document.getElementById('playBtn').textContent = 'Start';
+            document.getElementById('playBtn').className = 'bg-rose-300 hover:bg-rose-400 text-white px-12 py-4 rounded-2xl text-xl font-light smooth-transition soft-shadow';
+            
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            const mins = Math.floor(currentSeconds / 60);
+            const secs = currentSeconds % 60;
+            document.getElementById('timeDisplay').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            
+            const progress = (totalSeconds - currentSeconds) / totalSeconds;
+            const circumference = 2 * Math.PI * 45;
+            const offset = circumference * progress;
+            document.getElementById('progressCircle').style.strokeDashoffset = offset;
+            
+            // Color changes
+            const circle = document.getElementById('progressCircle');
+            if (currentSeconds <= 5 && currentSeconds > 0) {
+                circle.style.stroke = '#f87171';
+            } else if (shouldAlert()) {
+                circle.style.stroke = '#fbbf24';
+            } else {
+                circle.style.stroke = '#fb7185';
+            }
+        }
+        
+        function shouldAlert() {
+            switch(mode) {
+                case 'grade6-7': return currentSeconds <= 60;
+                case 'grade8-10': return currentSeconds <= 90;
+                case 'buzzer': return currentSeconds <= 30;
+                default: return false;
+            }
+        }
+        
+        function checkAlerts() {
+            if (shouldAlert() && !halfwayAlerted) {
+                halfwayAlerted = true;
+                playHalfwayAlert();
+            }
+            
+            if (currentSeconds <= 5 && currentSeconds > 0 && !finalAlerted) {
+                finalAlerted = true;
+                playFinalAlert();
+            }
+        }
+        
+        function finish() {
+            running = false;
+            clearInterval(interval);
+            currentSeconds = 0;
+            
+            playFinishSound();
+            updateDisplay();
+            
+            document.getElementById('playBtn').textContent = 'Done';
+            document.getElementById('playBtn').className = 'bg-green-300 text-white px-12 py-4 rounded-2xl text-xl font-light cursor-not-allowed opacity-75';
+        }
+        
+        function goHome() {
+            if (running) {
+                clearInterval(interval);
+                running = false;
+            }
+            
+            document.getElementById('timerScreen').classList.add('hidden');
+            document.getElementById('homeScreen').classList.remove('hidden');
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !document.getElementById('timerScreen').classList.contains('hidden')) {
+                e.preventDefault();
+                toggleTimer();
+            } else if (e.key === 'r' && !document.getElementById('timerScreen').classList.contains('hidden')) {
+                e.preventDefault();
+                resetTimer();
+            } else if (e.key === 'Escape') {
+                goHome();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a4677bd5176efe',t:'MTc1OTc0NTc5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

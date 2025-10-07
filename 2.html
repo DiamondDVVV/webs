@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Debate Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-bg: linear-gradient(135deg, #ADD8E6 0%, #87CEEB 50%, #B0E0E6 100%);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --text-primary: #2C3E50;
+            --text-secondary: #34495E;
+            --accent-color: #5DADE2;
+        }
+        
+        .theme-bg {
+            background: var(--primary-bg);
+            position: relative;
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .theme-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(173, 216, 230, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(135, 206, 235, 0.2) 0%, transparent 50%);
+            animation: gentleFlow 12s ease-in-out infinite;
+        }
+        
+        @keyframes gentleFlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .theme-selector {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(30px);
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            transition: right 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            overflow-y: auto;
+        }
+        
+        .theme-selector.open {
+            right: 0;
+        }
+        
+        .theme-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            animation: jiggle 2s ease-in-out infinite;
+        }
+        
+        .theme-icon:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        @keyframes jiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+        
+        .theme-option {
+            width: 100%;
+            height: 80px;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .theme-option:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .theme-option.active {
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        
+        .timer-display {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(40px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.1),
+                inset 0 2px 0 rgba(255, 255, 255, 0.4);
+        }
+        
+        .control-button {
+            background: linear-gradient(135deg, var(--accent-color), #3498DB);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 12px 30px rgba(93, 173, 226, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .control-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 18px 40px rgba(93, 173, 226, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        .secondary-button {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .secondary-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .warning-pulse {
+            animation: warningPulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes warningPulse {
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(255, 193, 7, 0.6);
+                border-color: rgba(255, 193, 7, 0.7);
+            }
+            50% { 
+                box-shadow: 0 0 50px rgba(255, 193, 7, 0.9);
+                border-color: rgba(255, 193, 7, 1);
+            }
+        }
+        
+        .danger-pulse {
+            animation: dangerPulse 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes dangerPulse {
+            0%, 100% { 
+                box-shadow: 0 0 40px rgba(231, 76, 60, 0.7);
+                border-color: rgba(231, 76, 60, 0.8);
+            }
+            50% { 
+                box-shadow: 0 0 60px rgba(231, 76, 60, 1);
+                border-color: rgba(231, 76, 60, 1);
+            }
+        }
+        
+        .mode-icon {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border-radius: 50%;
+            animation: gentleFloat 18s ease-in-out infinite;
+        }
+        
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-25px) rotate(120deg); }
+            66% { transform: translateY(12px) rotate(240deg); }
+        }
+        
+        .status-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.6s ease;
+            color: var(--text-secondary);
+        }
+        
+        .status-active {
+            background: rgba(93, 173, 226, 0.3);
+            border: 1px solid rgba(93, 173, 226, 0.6);
+            box-shadow: 0 0 25px rgba(93, 173, 226, 0.4);
+            color: white;
+        }
+        
+    </style>
+</head>
+<body class="min-h-screen theme-bg overflow-hidden">
+
+    <!-- Theme Selector Icon -->
+    <div class="theme-icon" onclick="toggleThemeSelector()">
+        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+    </div>
+
+    <!-- Theme Selector Panel -->
+    <div id="themeSelector" class="theme-selector">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-white">Choose Theme</h3>
+                <button onclick="toggleThemeSelector()" class="text-white hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 gap-4" id="themeGrid">
+                <!-- Themes will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-element w-24 h-24 top-16 left-16" style="animation-delay: 0s;"></div>
+    <div class="floating-element w-32 h-32 top-32 right-24" style="animation-delay: 5s;"></div>
+    <div class="floating-element w-20 h-20 bottom-24 left-32" style="animation-delay: 10s;"></div>
+    <div class="floating-element w-28 h-28 bottom-16 right-16" style="animation-delay: 3s;"></div>
+
+    <!-- Home Screen -->
+    <div id="homeScreen" class="min-h-screen flex flex-col items-center justify-center p-12 relative z-10">
+        
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <div class="mode-icon w-24 h-24 rounded-full mx-auto mb-8 flex items-center justify-center">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24" style="color: var(--text-primary);">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </div>
+            <h1 class="text-7xl font-bold mb-4" style="font-family: 'Poppins', sans-serif; color: var(--text-primary); text-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                Student Debate Timer
+            </h1>
+            <p class="text-2xl font-light" style="font-family: 'Inter', sans-serif; color: var(--text-secondary);">
+                Choose your debate format
+            </p>
+        </div>
+        
+        <!-- Timer Options -->
+        <div class="grid grid-cols-3 gap-12 max-w-6xl w-full">
+            
+            <!-- Grade 6-7 -->
+            <div class="glass-card rounded-3xl p-12 text-center cursor-pointer" onclick="startTimer('grade6-7')">
+                <div class="mode-icon w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" style="color: var(--text-primary);">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <div class="text-6xl font-light mb-6" style="font-family: 'Inter', sans-serif; color: var(--text-primary); text-shadow: 0 2px 15px rgba(0,0,0,0.1);">
+                    2:00
+                </div>
+                <h3 class="text-2xl font-semibold mb-3" style="font-family: 'Poppins', sans-serif; color: var(--text-primary);">
+                    Grade 6-7
+                </h3>
+                <p style="color: var(--text-secondary);" class="text-lg font-light">Beginner Level</p>
+                <div class="w-full h-1 bg-white/20 rounded-full overflow-hidden mt-4">
+                    <div class="w-1/3 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></div>
+                </div>
+            </div>
+            
+            <!-- Grade 8-10 -->
+            <div class="glass-card rounded-3xl p-12 text-center cursor-pointer" onclick="startTimer('grade8-10')">
+                <div class="mode-icon w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" style="color: var(--text-primary);">
+                        <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zM4 19h16v2H4z"/>
+                    </svg>
+                </div>
+                <div class="text-6xl font-light mb-6" style="font-family: 'Inter', sans-serif; color: var(--text-primary); text-shadow: 0 2px 15px rgba(0,0,0,0.1);">
+                    3:00
+                </div>
+                <h3 class="text-2xl font-semibold mb-3" style="font-family: 'Poppins', sans-serif; color: var(--text-primary);">
+                    Grade 8-10
+                </h3>
+                <p style="color: var(--text-secondary);" class="text-lg font-light">Intermediate Level</p>
+                <div class="w-full h-1 bg-white/20 rounded-full overflow-hidden mt-4">
+                    <div class="w-2/3 h-full bg-gradient-to-r from-blue-500 to-blue-700 rounded-full"></div>
+                </div>
+            </div>
+            
+            <!-- Rebuttal -->
+            <div class="glass-card rounded-3xl p-12 text-center cursor-pointer" onclick="startTimer('rebuttal')">
+                <div class="mode-icon w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" style="color: var(--text-primary);">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                </div>
+                <div class="text-6xl font-light mb-6" style="font-family: 'Inter', sans-serif; color: var(--text-primary); text-shadow: 0 2px 15px rgba(0,0,0,0.1);">
+                    1:00
+                </div>
+                <h3 class="text-2xl font-semibold mb-3" style="font-family: 'Poppins', sans-serif; color: var(--text-primary);">
+                    Rebuttal
+                </h3>
+                <p style="color: var(--text-secondary);" class="text-lg font-light">Quick Response</p>
+                <div class="w-full h-1 bg-white/20 rounded-full overflow-hidden mt-4">
+                    <div class="w-full h-full bg-gradient-to-r from-blue-600 to-blue-800 rounded-full"></div>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+
+    <!-- Timer Screen -->
+    <div id="timerScreen" class="min-h-screen flex flex-col items-center justify-center p-12 relative z-10 hidden">
+        
+        <!-- Header Bar -->
+        <div class="w-full max-w-6xl flex justify-between items-center mb-12">
+            <button onclick="goHome()" class="glass-card px-8 py-4 rounded-2xl font-medium text-xl" style="color: var(--text-primary);">
+                ← Back to Menu
+            </button>
+            <div class="glass-card px-8 py-4 rounded-2xl">
+                <span id="currentMode" class="text-xl font-semibold" style="font-family: 'Poppins', sans-serif; color: var(--text-primary);">
+                    Grade 6-7
+                </span>
+            </div>
+        </div>
+        
+        <!-- Main Timer Display -->
+        <div class="timer-display rounded-3xl p-16 mb-12 relative" id="mainTimer">
+            <div class="relative">
+                <svg class="w-80 h-80 transform -rotate-90" viewBox="0 0 100 100">
+                    <defs>
+                        <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#5DADE2;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#3498DB;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="warningGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#F39C12;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#E67E22;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="dangerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#E74C3C;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#C0392B;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="45" stroke="rgba(255,255,255,0.2)" stroke-width="3" fill="none"/>
+                    <circle id="progressCircle" cx="50" cy="50" r="45" stroke="url(#timerGrad)" stroke-width="3" fill="none" 
+                            stroke-linecap="round" stroke-dasharray="283 283" stroke-dashoffset="0"
+                            style="transition: stroke-dashoffset 1s ease, stroke 0.5s ease; filter: drop-shadow(0 0 15px rgba(93, 173, 226, 0.5));"/>
+                </svg>
+                
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <div id="timeDisplay" class="text-7xl font-light mb-2" style="font-family: 'Inter', sans-serif; color: var(--text-primary); text-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                        2:00
+                    </div>
+                    <div class="text-lg font-medium" style="color: var(--text-secondary);">REMAINING</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Control Buttons -->
+        <div class="flex gap-8 mb-12">
+            <button id="playBtn" onclick="toggleTimer()" class="control-button px-16 py-6 rounded-2xl text-2xl font-semibold">
+                START
+            </button>
+            <button onclick="resetTimer()" class="secondary-button px-16 py-6 rounded-2xl text-2xl font-medium transition-all duration-300">
+                RESET
+            </button>
+        </div>
+        
+        <!-- Status Indicators -->
+        <div class="flex gap-6">
+            <div id="halfwayStatus" class="status-indicator px-8 py-4 rounded-full font-medium">
+                Halfway Alert
+            </div>
+            <div id="finalStatus" class="status-indicator px-8 py-4 rounded-full font-medium">
+                Final Countdown
+            </div>
+            <div id="completeStatus" class="status-indicator px-8 py-4 rounded-full font-medium">
+                Time Complete
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        let mode = '';
+        let totalSeconds = 0;
+        let currentSeconds = 0;
+        let interval = null;
+        let running = false;
+        let halfwayAlerted = false;
+        let finalAlerted = false;
+        let currentTheme = 0;
+        
+        let audioCtx = null;
+        
+        const modeConfig = {
+            'grade6-7': { time: 120, name: 'Grade 6-7', warning: 60 },
+            'grade8-10': { time: 180, name: 'Grade 8-10', warning: 90 },
+            'rebuttal': { time: 60, name: 'Rebuttal', warning: 30 }
+        };
+        
+        const themes = [
+            { name: 'Light Blue', bg: 'linear-gradient(135deg, #ADD8E6 0%, #87CEEB 50%, #B0E0E6 100%)', font: 'Inter' },
+            { name: 'Sunset Orange', bg: 'linear-gradient(135deg, #FFB347 0%, #FF8C69 50%, #FFA07A 100%)', font: 'Poppins' },
+            { name: 'Mint Green', bg: 'linear-gradient(135deg, #98FB98 0%, #90EE90 50%, #AFEEEE 100%)', font: 'Inter' },
+            { name: 'Lavender Purple', bg: 'linear-gradient(135deg, #E6E6FA 0%, #DDA0DD 50%, #D8BFD8 100%)', font: 'Poppins' },
+            { name: 'Peach Pink', bg: 'linear-gradient(135deg, #FFCCCB 0%, #FFB6C1 50%, #FFC0CB 100%)', font: 'Inter' },
+            { name: 'Sky Blue', bg: 'linear-gradient(135deg, #87CEEB 0%, #87CEFA 50%, #B0E0E6 100%)', font: 'Poppins' },
+            { name: 'Soft Yellow', bg: 'linear-gradient(135deg, #FFFFE0 0%, #FFFACD 50%, #F0E68C 100%)', font: 'Inter' },
+            { name: 'Rose Gold', bg: 'linear-gradient(135deg, #F7CAC9 0%, #F8BBD0 50%, #FCE4EC 100%)', font: 'Poppins' },
+            { name: 'Aqua Mint', bg: 'linear-gradient(135deg, #AFEEEE 0%, #B0E0E6 50%, #E0FFFF 100%)', font: 'Inter' },
+            { name: 'Coral Reef', bg: 'linear-gradient(135deg, #FF7F7F 0%, #FFB347 50%, #FFA07A 100%)', font: 'Poppins' },
+            { name: 'Ocean Breeze', bg: 'linear-gradient(135deg, #B0E0E6 0%, #87CEEB 50%, #4682B4 100%)', font: 'Inter' },
+            { name: 'Cotton Candy', bg: 'linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 50%, #FFCCCB 100%)', font: 'Poppins' },
+            { name: 'Spring Green', bg: 'linear-gradient(135deg, #98FB98 0%, #90EE90 50%, #32CD32 100%)', font: 'Inter' },
+            { name: 'Twilight Blue', bg: 'linear-gradient(135deg, #4682B4 0%, #6495ED 50%, #87CEEB 100%)', font: 'Poppins' },
+            { name: 'Warm Peach', bg: 'linear-gradient(135deg, #FFDAB9 0%, #FFE4B5 50%, #FFCCCB 100%)', font: 'Inter' },
+            { name: 'Cool Mint', bg: 'linear-gradient(135deg, #F0FFFF 0%, #E0FFFF 50%, #AFEEEE 100%)', font: 'Poppins' },
+            { name: 'Soft Lilac', bg: 'linear-gradient(135deg, #E6E6FA 0%, #DDA0DD 50%, #DA70D6 100%)', font: 'Inter' },
+            { name: 'Golden Hour', bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%)', font: 'Poppins' },
+            { name: 'Arctic Blue', bg: 'linear-gradient(135deg, #E0FFFF 0%, #B0E0E6 50%, #87CEEB 100%)', font: 'Inter' },
+            { name: 'Blush Pink', bg: 'linear-gradient(135deg, #FFC0CB 0%, #FFB6C1 50%, #FF69B4 100%)', font: 'Poppins' },
+            { name: 'Forest Mist', bg: 'linear-gradient(135deg, #F0FFF0 0%, #98FB98 50%, #90EE90 100%)', font: 'Inter' },
+            { name: 'Sunset Glow', bg: 'linear-gradient(135deg, #FF6347 0%, #FF7F50 50%, #FFA07A 100%)', font: 'Poppins' },
+            { name: 'Powder Blue', bg: 'linear-gradient(135deg, #B0E0E6 0%, #ADD8E6 50%, #87CEEB 100%)', font: 'Inter' },
+            { name: 'Soft Coral', bg: 'linear-gradient(135deg, #F08080 0%, #FA8072 50%, #FF7F7F 100%)', font: 'Poppins' },
+            { name: 'Mint Cream', bg: 'linear-gradient(135deg, #F5FFFA 0%, #F0FFF0 50%, #E0FFFF 100%)', font: 'Inter' },
+            { name: 'Lavender Mist', bg: 'linear-gradient(135deg, #E6E6FA 0%, #F8F8FF 50%, #E0E6FF 100%)', font: 'Poppins' },
+            { name: 'Peachy Keen', bg: 'linear-gradient(135deg, #FFCBA4 0%, #FFE5B4 50%, #FFDAB9 100%)', font: 'Inter' },
+            { name: 'Ocean Foam', bg: 'linear-gradient(135deg, #F0FFFF 0%, #E0FFFF 50%, #B0E0E6 100%)', font: 'Poppins' },
+            { name: 'Rose Quartz', bg: 'linear-gradient(135deg, #F7CAC9 0%, #FFCCCB 50%, #FFC0CB 100%)', font: 'Inter' },
+            { name: 'Sage Green', bg: 'linear-gradient(135deg, #9CAF88 0%, #87A96B 50%, #98FB98 100%)', font: 'Poppins' },
+            { name: 'Periwinkle', bg: 'linear-gradient(135deg, #CCCCFF 0%, #C5C5FF 50%, #B19CD9 100%)', font: 'Inter' },
+            { name: 'Champagne', bg: 'linear-gradient(135deg, #F7E7CE 0%, #F5DEB3 50%, #FFE4B5 100%)', font: 'Poppins' },
+            { name: 'Seafoam', bg: 'linear-gradient(135deg, #93E9BE 0%, #AFEEEE 50%, #E0FFFF 100%)', font: 'Inter' },
+            { name: 'Dusty Rose', bg: 'linear-gradient(135deg, #DCAE96 0%, #F7CAC9 50%, #FFCCCB 100%)', font: 'Poppins' },
+            { name: 'Powder Pink', bg: 'linear-gradient(135deg, #FFB6C1 0%, #FFCCCB 50%, #FFC0CB 100%)', font: 'Inter' },
+            { name: 'Mint Julep', bg: 'linear-gradient(135deg, #F5FFFA 0%, #98FB98 50%, #90EE90 100%)', font: 'Poppins' },
+            { name: 'Baby Blue', bg: 'linear-gradient(135deg, #89CFF0 0%, #87CEEB 50%, #B0E0E6 100%)', font: 'Inter' },
+            { name: 'Apricot', bg: 'linear-gradient(135deg, #FBCEB1 0%, #FFCBA4 50%, #FFDAB9 100%)', font: 'Poppins' },
+            { name: 'Misty Blue', bg: 'linear-gradient(135deg, #E0F6FF 0%, #87CEEB 50%, #B0E0E6 100%)', font: 'Inter' },
+            { name: 'Soft Peach', bg: 'linear-gradient(135deg, #FFCBA4 0%, #FFDAB9 50%, #FFE4B5 100%)', font: 'Poppins' },
+            { name: 'Ice Blue', bg: 'linear-gradient(135deg, #F0F8FF 0%, #E0FFFF 50%, #B0E0E6 100%)', font: 'Inter' },
+            { name: 'Blush', bg: 'linear-gradient(135deg, #DE5D83 0%, #FFB6C1 50%, #FFC0CB 100%)', font: 'Poppins' },
+            { name: 'Mint Green Tea', bg: 'linear-gradient(135deg, #C7CEDB 0%, #98FB98 50%, #90EE90 100%)', font: 'Inter' },
+            { name: 'Sunset Pink', bg: 'linear-gradient(135deg, #FF91A4 0%, #FFB6C1 50%, #FFC0CB 100%)', font: 'Poppins' },
+            { name: 'Cloud White', bg: 'linear-gradient(135deg, #F8F8FF 0%, #F0F8FF 50%, #E6E6FA 100%)', font: 'Inter' },
+            { name: 'Coral Sunset', bg: 'linear-gradient(135deg, #FF7F7F 0%, #FF6347 50%, #FFA07A 100%)', font: 'Poppins' },
+            { name: 'Aqua Dream', bg: 'linear-gradient(135deg, #7FFFD4 0%, #AFEEEE 50%, #E0FFFF 100%)', font: 'Inter' },
+            { name: 'Lavender Fields', bg: 'linear-gradient(135deg, #E6E6FA 0%, #DDA0DD 50%, #D8BFD8 100%)', font: 'Poppins' },
+            { name: 'Peaches & Cream', bg: 'linear-gradient(135deg, #FFCBA4 0%, #FFDAB9 50%, #FFE4E1 100%)', font: 'Inter' },
+            { name: 'Ocean Mist', bg: 'linear-gradient(135deg, #B0E0E6 0%, #87CEEB 50%, #E0FFFF 100%)', font: 'Poppins' }
+        ];
+        
+        // Initialize themes on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            populateThemes();
+            applyTheme(0);
+        });
+        
+        function toggleThemeSelector() {
+            const selector = document.getElementById('themeSelector');
+            selector.classList.toggle('open');
+        }
+        
+        function populateThemes() {
+            const grid = document.getElementById('themeGrid');
+            themes.forEach((theme, index) => {
+                const themeDiv = document.createElement('div');
+                themeDiv.className = `theme-option ${index === currentTheme ? 'active' : ''}`;
+                themeDiv.style.background = theme.bg;
+                themeDiv.onclick = () => applyTheme(index);
+                
+                themeDiv.innerHTML = `
+                    <div class="p-4 h-full flex items-center justify-between">
+                        <div>
+                            <div class="font-semibold text-gray-800" style="font-family: '${theme.font}', sans-serif;">${theme.name}</div>
+                            <div class="text-sm text-gray-600">${theme.font} Font</div>
+                        </div>
+                        <div class="w-8 h-8 rounded-full border-2 border-white/50 flex items-center justify-center">
+                            ${index === currentTheme ? '<div class="w-4 h-4 rounded-full bg-white"></div>' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(themeDiv);
+            });
+        }
+        
+        function applyTheme(index) {
+            currentTheme = index;
+            const theme = themes[index];
+            
+            // Update CSS variables
+            document.documentElement.style.setProperty('--primary-bg', theme.bg);
+            
+            // Update font family
+            document.body.style.fontFamily = `'${theme.font}', sans-serif`;
+            
+            // Update active theme indicator
+            document.querySelectorAll('.theme-option').forEach((option, i) => {
+                option.classList.toggle('active', i === index);
+                const indicator = option.querySelector('.w-8.h-8 > div');
+                if (indicator) {
+                    indicator.style.display = i === index ? 'block' : 'none';
+                } else if (i === index) {
+                    const newIndicator = document.createElement('div');
+                    newIndicator.className = 'w-4 h-4 rounded-full bg-white';
+                    option.querySelector('.w-8.h-8').appendChild(newIndicator);
+                }
+            });
+            
+            // Close theme selector
+            document.getElementById('themeSelector').classList.remove('open');
+        }
+        
+        function playCustomSound(filename) {
+            const audio = new Audio(filename);
+            audio.volume = 0.7;
+            audio.play().catch(error => {
+                console.log('Audio playback failed:', error);
+                // Fallback to system beep if custom sound fails
+                if (window.speechSynthesis) {
+                    const utterance = new SpeechSynthesisUtterance('beep');
+                    utterance.volume = 0.1;
+                    utterance.rate = 2;
+                    window.speechSynthesis.speak(utterance);
+                }
+            });
+        }
+        
+        function playHalfwayAlert() {
+            playCustomSound('mid.mp3');
+        }
+        
+        function playFinalAlert() {
+            playCustomSound('5.mp3');
+        }
+        
+        function playCompleteSound() {
+            playCustomSound('end.mp3');
+        }
+        
+        function startTimer(selectedMode) {
+            mode = selectedMode;
+            const config = modeConfig[mode];
+            
+            totalSeconds = config.time;
+            currentSeconds = totalSeconds;
+            halfwayAlerted = false;
+            finalAlerted = false;
+            
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('timerScreen').classList.remove('hidden');
+            document.getElementById('currentMode').textContent = config.name;
+            
+            resetStatusIndicators();
+            updateDisplay();
+        }
+        
+        function toggleTimer() {
+            if (running) {
+                pause();
+            } else {
+                start();
+            }
+        }
+        
+        function start() {
+            running = true;
+            const btn = document.getElementById('playBtn');
+            btn.textContent = 'PAUSE';
+            btn.style.background = 'linear-gradient(135deg, #F39C12, #E67E22)';
+            
+            interval = setInterval(() => {
+                currentSeconds--;
+                updateDisplay();
+                checkAlerts();
+                
+                if (currentSeconds <= 0) {
+                    complete();
+                }
+            }, 1000);
+        }
+        
+        function pause() {
+            running = false;
+            clearInterval(interval);
+            const btn = document.getElementById('playBtn');
+            btn.textContent = 'RESUME';
+            btn.style.background = 'linear-gradient(135deg, var(--accent-color), #3498DB)';
+        }
+        
+        function resetTimer() {
+            running = false;
+            clearInterval(interval);
+            currentSeconds = totalSeconds;
+            halfwayAlerted = false;
+            finalAlerted = false;
+            
+            const btn = document.getElementById('playBtn');
+            btn.textContent = 'START';
+            btn.style.background = 'linear-gradient(135deg, var(--accent-color), #3498DB)';
+            
+            const timer = document.getElementById('mainTimer');
+            timer.classList.remove('warning-pulse', 'danger-pulse');
+            
+            resetStatusIndicators();
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            const mins = Math.floor(currentSeconds / 60);
+            const secs = currentSeconds % 60;
+            document.getElementById('timeDisplay').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            
+            const progress = (totalSeconds - currentSeconds) / totalSeconds;
+            const circumference = 2 * Math.PI * 45;
+            const offset = circumference * progress;
+            document.getElementById('progressCircle').style.strokeDashoffset = offset;
+            
+            const timer = document.getElementById('mainTimer');
+            const circle = document.getElementById('progressCircle');
+            
+            // Visual state changes
+            if (currentSeconds <= 5 && currentSeconds > 0) {
+                circle.style.stroke = 'url(#dangerGrad)';
+                timer.classList.remove('warning-pulse');
+                timer.classList.add('danger-pulse');
+            } else if (shouldAlert()) {
+                circle.style.stroke = 'url(#warningGrad)';
+                timer.classList.remove('danger-pulse');
+                timer.classList.add('warning-pulse');
+            } else {
+                circle.style.stroke = 'url(#timerGrad)';
+                timer.classList.remove('warning-pulse', 'danger-pulse');
+            }
+        }
+        
+        function shouldAlert() {
+            switch(mode) {
+                case 'grade6-7': return currentSeconds <= 60;
+                case 'grade8-10': return currentSeconds <= 90;
+                case 'rebuttal': return currentSeconds <= 30;
+                default: return false;
+            }
+        }
+        
+        function checkAlerts() {
+            if (shouldAlert() && !halfwayAlerted) {
+                halfwayAlerted = true;
+                playHalfwayAlert();
+                document.getElementById('halfwayStatus').className = 'status-indicator status-active px-8 py-4 rounded-full font-medium';
+            }
+            
+            if (currentSeconds <= 5 && currentSeconds > 0 && !finalAlerted) {
+                finalAlerted = true;
+                playFinalAlert();
+                document.getElementById('finalStatus').className = 'status-indicator status-active px-8 py-4 rounded-full font-medium';
+            }
+        }
+        
+        function complete() {
+            running = false;
+            clearInterval(interval);
+            currentSeconds = 0;
+            
+            playCompleteSound();
+            updateDisplay();
+            
+            const btn = document.getElementById('playBtn');
+            btn.textContent = 'COMPLETE';
+            btn.style.background = 'linear-gradient(135deg, #27AE60, #2ECC71)';
+            btn.className += ' cursor-not-allowed opacity-75';
+            
+            document.getElementById('completeStatus').className = 'status-indicator status-active px-8 py-4 rounded-full font-medium';
+            
+            const timer = document.getElementById('mainTimer');
+            timer.classList.remove('warning-pulse');
+            timer.classList.add('danger-pulse');
+        }
+        
+        function resetStatusIndicators() {
+            document.getElementById('halfwayStatus').className = 'status-indicator px-8 py-4 rounded-full font-medium';
+            document.getElementById('finalStatus').className = 'status-indicator px-8 py-4 rounded-full font-medium';
+            document.getElementById('completeStatus').className = 'status-indicator px-8 py-4 rounded-full font-medium';
+        }
+        
+        function goHome() {
+            if (running) {
+                clearInterval(interval);
+                running = false;
+            }
+            
+            const timer = document.getElementById('mainTimer');
+            timer.classList.remove('warning-pulse', 'danger-pulse');
+            
+            document.getElementById('timerScreen').classList.add('hidden');
+            document.getElementById('homeScreen').classList.remove('hidden');
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !document.getElementById('timerScreen').classList.contains('hidden')) {
+                e.preventDefault();
+                toggleTimer();
+            } else if (e.key === 'r' && !document.getElementById('timerScreen').classList.contains('hidden')) {
+                e.preventDefault();
+                resetTimer();
+            } else if (e.key === 'Escape') {
+                goHome();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98aa3ee231e585c9',t:'MTc1OTgwNzA0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

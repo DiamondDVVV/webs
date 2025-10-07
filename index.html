@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototypes Showcase</title>
+
+<style>
+  /* --- Background --- */
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #74ABE2, #5563DE, #9B59B6);
+    background-size: 400% 400%;
+    animation: gradientShift 12s ease infinite;
+    margin: 0;
+    padding: 40px;
+    text-align: center;
+    color: #fff;
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* --- Layout --- */
+  .projects {
+    display: inline-block;
+    text-align: center;
+  }
+
+  .row {
+    display: block;
+    width: 100%;
+    margin-bottom: 30px;
+  }
+
+  /* --- Card design --- */
+  .project {
+    display: inline-block;
+    margin: 15px 25px;
+    width: 200px;
+    height: 120px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    transition: all 0.35s ease;
+  }
+
+  .project:hover {
+    transform: translateY(-8px) scale(1.05);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  /* --- Text link inside each card --- */
+  .project a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    height: 100%;
+    width: 100%;
+    transition: color 0.3s;
+  }
+
+  .project:hover a {
+    color: #ffe;
+  }
+
+  /* --- Heading --- */
+  h2 {
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin-bottom: 40px;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+</style>
+</head>
+
+<body>
+  <h2>Prototype Gallery</h2>
+
+  <div class="projects">
+    <div class="row">
+      <div class="project"><a href="1.html">Prototype 1 (with different audio)</a></div>
+      <div class="project"><a href="2.html">Prototype 2 (with different audio)</a></div>
+      <div class="project"><a href="3.html">Prototype 3</a></div>
+    </div>
+
+    <div class="row">
+      <div class="project"><a href="4.html">Prototype 4</a></div>
+      <div class="project"><a href="5.html">Prototype 5</a></div>
+    </div>
+  </div>
+</body>
+</html>
